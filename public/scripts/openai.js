@@ -3100,7 +3100,10 @@ async function sendOpenAIRequest(type, messages, signal, { jsonSchema = null } =
         checkModerationError(data);
 
         if (data.error) {
-            const message = data.error.message || response.statusText || t`Unknown error`;
+            const message = data.error.message || data.error.code || data.error.type
+                || (typeof data.error === 'string' ? data.error : null)
+                || t`Unknown error`;
+            console.error('[API error] Raw error object from response:', JSON.stringify(data.error));
             toastr.error(message, t`API returned an error`);
             throw new Error(message);
         }
