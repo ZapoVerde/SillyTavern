@@ -5378,6 +5378,10 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
             }
 
             if (isStreamFinished) {
+                const trimmedStream = getMessage.trim();
+                if (type !== 'quiet' && !isImpersonate && (!trimmedStream || trimmedStream === '...')) {
+                    await eventSource.emit(event_types.GENERATION_EMPTY, type);
+                }
                 await streamingProcessor.onFinishStreaming(streamingProcessor.messageId, getMessage);
                 streamingProcessor = null;
                 triggerAutoContinue(messageChunk, isImpersonate);
@@ -5425,6 +5429,11 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
 
         //const getData = await response.json();
         let getMessage = extractMessageFromData(data);
+
+        if (type !== 'quiet' && !isImpersonate && !getMessage.trim()) {
+            await eventSource.emit(event_types.GENERATION_EMPTY, type);
+        }
+
         let title = extractTitleFromData(data);
         let reasoning = extractReasoningFromData(data);
         let imageUrls = extractImagesFromData(data);
