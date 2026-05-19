@@ -3029,6 +3029,9 @@ export function flushEphemeralStoppingStrings() {
  * @param {string} text The text to check
  * @returns {boolean} If the generated text should be filtered
  */
+let autoSwipeConsecutiveCount = 0;
+const AUTO_SWIPE_MAX_CONSECUTIVE = 3;
+
 export function generatedTextFiltered(text) {
     /**
      * Checks if the given text contains any of the blacklisted words.
@@ -3043,24 +3046,40 @@ export function generatedTextFiltered(text) {
         return matches.length >= threshold;
     }
 
-    // Make sure a generated text is non-empty
-    // Otherwise we might get in a loop with a broken API
+    function triggerSwipe() {
+        if (autoSwipeConsecutiveCount >= AUTO_SWIPE_MAX_CONSECUTIVE) {
+            console.warn(`Autoswipe stopped after ${AUTO_SWIPE_MAX_CONSECUTIVE} consecutive filtered responses`);
+            toastr.warning(`Autoswipe stopped after ${AUTO_SWIPE_MAX_CONSECUTIVE} consecutive filtered responses.`, 'Autoswipe');
+            autoSwipeConsecutiveCount = 0;
+            return false;
+        }
+        autoSwipeConsecutiveCount++;
+        return true;
+    }
+
     text = text.trim();
+
+    if (text.length === 0 && power_user.auto_swipe_minimum_length) {
+        console.log('Generated text is empty');
+        return triggerSwipe();
+    }
+
     if (text.length > 0) {
         if (power_user.auto_swipe_minimum_length) {
             if (text.length < power_user.auto_swipe_minimum_length) {
                 console.log('Generated text size too small');
-                return true;
+                return triggerSwipe();
             }
         }
         if (power_user.auto_swipe_blacklist.length && power_user.auto_swipe_blacklist_threshold) {
             if (containsBlacklistedWords(text, power_user.auto_swipe_blacklist, power_user.auto_swipe_blacklist_threshold)) {
                 console.log('Generated text has blacklisted words');
-                return true;
+                return triggerSwipe();
             }
         }
     }
 
+    autoSwipeConsecutiveCount = 0;
     return false;
 }
 
