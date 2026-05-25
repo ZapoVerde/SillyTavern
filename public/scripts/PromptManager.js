@@ -2,7 +2,7 @@
 
 import { DOMPurify } from '../lib.js';
 
-import { event_types, eventSource, is_send_press, main_api, substituteParams } from '../script.js';
+import { event_types, eventSource, is_send_press, main_api, saveSettings, substituteParams } from '../script.js';
 import { is_group_generating } from './group-chats.js';
 import { Message, MessageCollection, TokenHandler } from './openai.js';
 import { power_user } from './power-user.js';
@@ -448,7 +448,7 @@ class PromptManager {
             counts[promptID] = null;
             promptOrderEntry.enabled = !promptOrderEntry.enabled;
             this.render();
-            this.saveServiceSettings();
+            saveSettings();
         };
 
         // Open edit form and load selected prompt
