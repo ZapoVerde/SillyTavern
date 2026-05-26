@@ -708,16 +708,19 @@ export function getImages(directoryPath, sortBy = 'name', type = MEDIA_REQUEST_T
  */
 function _extractSSEUsage(text) {
     let usage = null;
+    let model = null;
     for (const line of text.split('\n')) {
         if (!line.startsWith('data: ')) continue;
         const payload = line.slice(6).trim();
         if (payload === '[DONE]') continue;
         try {
             const obj = JSON.parse(payload);
+            if (obj?.model) model = obj.model;
             if (obj?.usage?.total_tokens != null) usage = obj.usage;
         } catch (_) {}
     }
-    return usage;
+    if (!usage) return null;
+    return model ? { ...usage, _lgz_model: model } : usage;
 }
 
 /**
