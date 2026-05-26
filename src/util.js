@@ -701,6 +701,26 @@ export function getImages(directoryPath, sortBy = 'name', type = MEDIA_REQUEST_T
 }
 
 /**
+ * Extracts the usage object from a buffered SSE response body.
+ * Returns the last usage object found, or null if none is present.
+ * @param {string} text Accumulated SSE text from the stream
+ * @returns {object|null}
+ */
+function _extractSSEUsage(text) {
+    let usage = null;
+    for (const line of text.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (payload === '[DONE]') continue;
+        try {
+            const obj = JSON.parse(payload);
+            if (obj?.usage?.total_tokens != null) usage = obj.usage;
+        } catch (_) {}
+    }
+    return usage;
+}
+
+/**
  * Pipe a fetch() response to an Express.js Response, including status code.
  * @param {import('node-fetch').Response} from The Fetch API response to pipe from.
  * @param {import('express').Response} to The Express response to pipe to.
@@ -738,6 +758,14 @@ export async function forwardFetchResponse(from, to) {
     }
 
     if (from.body && to.socket) {
+        // Tap the stream to extract usage from the final SSE chunk for cost logging.
+        // Keeps only a rolling tail so memory stays bounded even for long responses.
+        let _sseBuffer = '';
+        from.body.on('data', chunk => {
+            _sseBuffer += chunk.toString('utf8');
+            if (_sseBuffer.length > 8192) _sseBuffer = _sseBuffer.slice(-4096);
+        });
+
         from.body.pipe(to);
 
         to.socket.on('close', function () {
@@ -747,6 +775,8 @@ export async function forwardFetchResponse(from, to) {
         });
 
         from.body.on('end', function () {
+            const usage = _extractSSEUsage(_sseBuffer);
+            if (usage) console.debug('Chat Completion usage:', usage);
             console.info('Streaming request finished');
             to.end();
         });
