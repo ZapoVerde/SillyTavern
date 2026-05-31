@@ -1082,6 +1082,7 @@ function throwIfSourceInvalid() {
         settings.source === 'mistral' && !secret_state[SECRET_KEYS.MISTRALAI] ||
         settings.source === 'togetherai' && !secret_state[SECRET_KEYS.TOGETHERAI] ||
         settings.source === 'nomicai' && !secret_state[SECRET_KEYS.NOMICAI] ||
+        settings.source === 'voyageai' && !secret_state[SECRET_KEYS.VOYAGEAI] ||
         settings.source === 'cohere' && !secret_state[SECRET_KEYS.COHERE] ||
         settings.source === 'workers_ai' && !secret_state[SECRET_KEYS.WORKERS_AI] ||
         settings.source === 'siliconflow' && !secret_state[SECRET_KEYS.SILICONFLOW]) {
@@ -1304,6 +1305,7 @@ function toggleSettings() {
     $('#llamacpp_vectorsModel').toggle(settings.source === 'llamacpp');
     $('#vllm_vectorsModel').toggle(settings.source === 'vllm');
     $('#nomicai_apiKey').toggle(settings.source === 'nomicai');
+    $('#voyageai_apiKey').toggle(settings.source === 'voyageai');
     $('#webllm_vectorsModel').toggle(settings.source === 'webllm');
     $('#koboldcpp_vectorsModel').toggle(settings.source === 'koboldcpp');
     $('#google_vectorsModel').toggle(settings.source === 'palm' || settings.source === 'vertexai');
@@ -2079,6 +2081,14 @@ export async function init() {
         eventSource.on(event, (/** @type {string} */ key) => {
             if (key !== SECRET_KEYS.NOMICAI) return;
             $('#api_key_nomicai').toggleClass('success', !!secret_state[SECRET_KEYS.NOMICAI]);
+        });
+    });
+
+    $('#api_key_voyageai').toggleClass('success', !!secret_state[SECRET_KEYS.VOYAGEAI]);
+    [event_types.SECRET_WRITTEN, event_types.SECRET_DELETED, event_types.SECRET_ROTATED].forEach(event => {
+        eventSource.on(event, (/** @type {string} */ key) => {
+            if (key !== SECRET_KEYS.VOYAGEAI) return;
+            $('#api_key_voyageai').toggleClass('success', !!secret_state[SECRET_KEYS.VOYAGEAI]);
         });
     });
 
