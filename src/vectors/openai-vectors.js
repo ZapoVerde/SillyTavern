@@ -71,7 +71,7 @@ const SOURCES = {
     'voyageai': {
         secretKey: SECRET_KEYS.VOYAGEAI,
         url: 'https://api.voyageai.com/v1',
-        model: 'voyage-3',
+        model: 'voyage-4',
         headers: {},
         processBody: () => {},
     },
